@@ -14,11 +14,13 @@ class BaseMessage(BaseModel, Generic[DataT]):
 class DetectorCommentData(BaseModel):
     content: str = Field(..., min_length=1)
     comment_id: Union[int, str]
+    type: int = Field(..., description="Type code as integer")
 
 
 class DoneDetectorCommentData(BaseModel):
     comment_id: Union[int, str]
     toxic_spans: List[Dict[str, int]]
+    type: int = Field(..., description="Type code as integer")
 
 
 class DetectorCommentMessage(BaseMessage[DetectorCommentData]):
