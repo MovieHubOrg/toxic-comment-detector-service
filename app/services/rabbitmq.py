@@ -145,10 +145,11 @@ class RabbitMQCommentDetector:
 
         if toxicity_result.strip().lower() != "toxic":
             logger.info(
-                "Comment %s detected as %s. No update message sent.",
+                "Comment %s detected as %s. Sending message with empty toxic_spans.",
                 comment_id,
                 toxicity_result,
             )
+            await self._publish_detection_result(comment_id, [], msg_type)
             return
 
         logger.info("Comment %s detected as toxic. Detecting hate spans.", comment_id)
