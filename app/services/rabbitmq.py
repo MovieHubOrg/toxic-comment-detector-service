@@ -136,6 +136,7 @@ class RabbitMQCommentDetector:
         content = detector_message.data.content
         comment_id = detector_message.data.comment_id
         msg_type = detector_message.data.type
+        scan_version = detector_message.data.scan_version
         logger.info("Detecting toxic comment. comment_id=%s type=%s", comment_id, msg_type)
         toxicity_result = await asyncio.to_thread(
             run_inference,
@@ -149,7 +150,7 @@ class RabbitMQCommentDetector:
                 comment_id,
                 toxicity_result,
             )
-            await self._publish_detection_result(comment_id, [], msg_type)
+            await self._publish_detection_result(comment_id, [], msg_type, scan_version)
             return
 
         logger.info("Comment %s detected as toxic. Detecting hate spans.", comment_id)
@@ -159,13 +160,14 @@ class RabbitMQCommentDetector:
             HATE_SPANS_DETECTION_TASK,
         )
         toxic_spans = extract_toxic_spans(detected_content)
-        await self._publish_detection_result(comment_id, toxic_spans, msg_type)
+        await self._publish_detection_result(comment_id, toxic_spans, msg_type, scan_version)
 
     async def _publish_detection_result(
         self,
         comment_id: Union[int, str],
         toxic_spans: List[Dict[str, int]],
         msg_type: int,
+        scan_version: Optional[int] = None,
     ) -> None:
         if self._channel is None:
             raise RuntimeError("RabbitMQ channel is not available.")
@@ -177,6 +179,7 @@ class RabbitMQCommentDetector:
                 comment_id=comment_id,
                 toxic_spans=toxic_spans,
                 type=msg_type,
+                scan_version=scan_version,
             ),
         )
         body = json.dumps(
